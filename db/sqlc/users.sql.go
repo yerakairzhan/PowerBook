@@ -42,6 +42,15 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateU
 	return i, err
 }
 
+const deleteUserState = `-- name: DeleteUserState :exec
+update users set state = null where userid = $1
+`
+
+func (q *Queries) DeleteUserState(ctx context.Context, userid string) error {
+	_, err := q.db.ExecContext(ctx, deleteUserState, userid)
+	return err
+}
+
 const getLanguage = `-- name: GetLanguage :one
 select language from users where userid = $1
 `
@@ -51,6 +60,17 @@ func (q *Queries) GetLanguage(ctx context.Context, userid string) (sql.NullStrin
 	var language sql.NullString
 	err := row.Scan(&language)
 	return language, err
+}
+
+const getRegistered = `-- name: GetRegistered :one
+select registered from users where userid = $1
+`
+
+func (q *Queries) GetRegistered(ctx context.Context, userid string) (sql.NullBool, error) {
+	row := q.db.QueryRowContext(ctx, getRegistered, userid)
+	var registered sql.NullBool
+	err := row.Scan(&registered)
+	return registered, err
 }
 
 const getUser = `-- name: GetUser :one
@@ -67,4 +87,41 @@ func (q *Queries) GetUser(ctx context.Context, userid string) (GetUserRow, error
 	var i GetUserRow
 	err := row.Scan(&i.Userid, &i.Username)
 	return i, err
+}
+
+const getUserState = `-- name: GetUserState :one
+SELECT state FROM users WHERE userid = $1
+`
+
+func (q *Queries) GetUserState(ctx context.Context, userid string) (sql.NullString, error) {
+	row := q.db.QueryRowContext(ctx, getUserState, userid)
+	var state sql.NullString
+	err := row.Scan(&state)
+	return state, err
+}
+
+const setRegistered = `-- name: SetRegistered :exec
+update users set registered = true where userid = $1
+`
+
+func (q *Queries) SetRegistered(ctx context.Context, userid string) error {
+	_, err := q.db.ExecContext(ctx, setRegistered, userid)
+	return err
+}
+
+const setUserState = `-- name: SetUserState :exec
+INSERT INTO users (userid, state)
+VALUES ($1, $2)
+    ON CONFLICT (userid) DO UPDATE
+    SET state = EXCLUDED.state
+`
+
+type SetUserStateParams struct {
+	Userid string         `json:"userid"`
+	State  sql.NullString `json:"state"`
+}
+
+func (q *Queries) SetUserState(ctx context.Context, arg SetUserStateParams) error {
+	_, err := q.db.ExecContext(ctx, setUserState, arg.Userid, arg.State)
+	return err
 }
