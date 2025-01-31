@@ -100,6 +100,20 @@ func (q *Queries) GetUserState(ctx context.Context, userid string) (sql.NullStri
 	return state, err
 }
 
+const setLanguage = `-- name: SetLanguage :exec
+update users set language = $2 where userid = $1
+`
+
+type SetLanguageParams struct {
+	Userid   string         `json:"userid"`
+	Language sql.NullString `json:"language"`
+}
+
+func (q *Queries) SetLanguage(ctx context.Context, arg SetLanguageParams) error {
+	_, err := q.db.ExecContext(ctx, setLanguage, arg.Userid, arg.Language)
+	return err
+}
+
 const setRegistered = `-- name: SetRegistered :exec
 update users set registered = true where userid = $1
 `

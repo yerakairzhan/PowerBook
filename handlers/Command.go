@@ -63,7 +63,7 @@ func handleCommand(command string, queries *db.Queries, updates tgbotapi.Update,
 		callback_lang(queries, updates, bot, chatid)
 
 	case "read":
-		callback_read(queries, updates, bot)
+		callback_read(queries, updates, bot, strconv.FormatInt(userid, 10), chatid)
 	}
 }
 
@@ -90,12 +90,12 @@ func callback_lang(queries *db.Queries, updates tgbotapi.Update, bot *tgbotapi.B
 	if err != nil {
 		log.Println("Error sending message", err)
 	}
+
+	//TODO: change the language logic
 }
 
-func callback_read(queries *db.Queries, updates tgbotapi.Update, bot *tgbotapi.BotAPI) {
-	chatid := updates.Message.Chat.ID
-	userid := updates.Message.From.ID
-
+func callback_read(queries *db.Queries, updates tgbotapi.Update, bot *tgbotapi.BotAPI, userid string, chatid int64) {
+	log.Println(chatid, userid)
 	ctx := context.Background()
 	err, text := utils.GetTranslation(ctx, queries, updates, "read")
 	if err != nil {
@@ -115,7 +115,7 @@ func callback_read(queries *db.Queries, updates tgbotapi.Update, bot *tgbotapi.B
 
 	params := db.SetUserStateParams{
 		State:  state,
-		Userid: strconv.FormatInt(userid, 10),
+		Userid: userid,
 	}
 
 	err = queries.SetUserState(ctx, params)

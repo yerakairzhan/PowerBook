@@ -4,7 +4,7 @@ VALUES ($1, $2, $3)
         RETURNING *;
 
 -- name: UpdateReadingLog :one
-update reading_logs set minutes_read = $2 where userid = $1
+update reading_logs set minutes_read = $3 where (userid = $1 and date = $2)
     returning *;
 
 -- name: GetReadingLogsByUser :many

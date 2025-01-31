@@ -20,6 +20,7 @@ func handleMessage(queries *db.Queries, updates tgbotapi.Update, bot *tgbotapi.B
 	state, _ := queries.GetUserState(ctx, strconv.FormatInt(userid, 10))
 
 	if state.String == "waiting_for_reading_time" {
+
 		minutes, err := strconv.Atoi(userMessage)
 		log.Println("someone read ", minutes)
 		if err != nil {
@@ -38,6 +39,7 @@ func handleMessage(queries *db.Queries, updates tgbotapi.Update, bot *tgbotapi.B
 				if pqErr.Code == "23505" {
 					params := db.UpdateReadingLogParams{
 						Userid:      strconv.FormatInt(userid, 10),
+						Date:        time.Now(),
 						MinutesRead: int32(minutes),
 					}
 					queries.UpdateReadingLog(ctx, params)

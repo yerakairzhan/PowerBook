@@ -108,17 +108,18 @@ func (q *Queries) GetTopReaders(ctx context.Context, limit int32) ([]GetTopReade
 }
 
 const updateReadingLog = `-- name: UpdateReadingLog :one
-update reading_logs set minutes_read = $2 where userid = $1
+update reading_logs set minutes_read = $3 where (userid = $1 and date = $2)
     returning id, userid, date, minutes_read, created_at
 `
 
 type UpdateReadingLogParams struct {
-	Userid      string `json:"userid"`
-	MinutesRead int32  `json:"minutes_read"`
+	Userid      string    `json:"userid"`
+	Date        time.Time `json:"date"`
+	MinutesRead int32     `json:"minutes_read"`
 }
 
 func (q *Queries) UpdateReadingLog(ctx context.Context, arg UpdateReadingLogParams) (ReadingLog, error) {
-	row := q.db.QueryRowContext(ctx, updateReadingLog, arg.Userid, arg.MinutesRead)
+	row := q.db.QueryRowContext(ctx, updateReadingLog, arg.Userid, arg.Date, arg.MinutesRead)
 	var i ReadingLog
 	err := row.Scan(
 		&i.ID,

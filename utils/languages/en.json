@@ -1,3 +1,15 @@
 {
-  "start" : "Hello, Welcome to PowerBook Bot, "
+  "start": "Hello, ",
+  "start_1": "Welcome back! We missed you!",
+  "start_2": "📚 <b>Welcome to the Book Marathon!</b> 📚\n\nEvery day, log how many pages you’ve read and move towards your goal! The bot will remind you to track your progress and summarize the results at the end of the month.\n\n🔹 <b>How does the marathon work?</b>\n✅ Register and log your reading daily.\n✅ Get reminders if you forget to track your progress.\n✅ At the end of the month, participants who read more will receive a book from those who read less!\n\nPress <b>\"Register\"</b> to start! 🚀",
+  "menu": "📌 <b>Main Menu</b>\n\nChoose an action from the available commands.\nTap the desired command or enter it manually.",
+  "lang": "🌍 <b>Language Selection</b>\n\nPlease choose the language you want to use the bot in.\n\nTap the corresponding button to change the language.",
+  "read": "📖 <b>How many minutes did you read today?</b>\n\nPlease enter the number of minutes you dedicated to reading today. Example: 30",
+  "read_1": "Great! I’ve recorded it in your statistics.",
+  "read_2": "I didn’t understand you. Please use bot commands.",
+  "read_3": "We’ve updated your reading stats for today.",
+  "register": "<b>🎉 Congratulations! 🎉</b>\nYou have successfully registered! 🎊 Now you can use all the features.",
+  "register_1": "Sorry, you are not registered. Please complete registration to continue.",
+  "lang_1": "<b>🎉 Language successfully changed!</b>\nThe bot will now communicate with you in the selected language.",
+  "lang_2": "<b>❌ Error changing language</b>\nFailed to change the language. Please try again later."
 }
