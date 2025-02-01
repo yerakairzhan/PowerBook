@@ -8,6 +8,7 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"log"
 	"strconv"
+	"time"
 )
 
 func handleCallback(command string, queries *db.Queries, updates tgbotapi.Update, bot *tgbotapi.BotAPI, chatid int64) {
@@ -51,6 +52,13 @@ func handleCallback(command string, queries *db.Queries, updates tgbotapi.Update
 			_, text := utils.GetTranslation(ctx, queries, updates, "lang_1")
 			SendMessage(bot, chatid, text)
 		}
+
+	case "timer_15_00":
+		changeTimer(queries, userid, bot, updates, chatid, 15)
+	case "timer_18_00":
+		changeTimer(queries, userid, bot, updates, chatid, 18)
+	case "timer_21_00":
+		changeTimer(queries, userid, bot, updates, chatid, 21)
 	default:
 		log.Println("Unknown command: " + command)
 	}
@@ -67,6 +75,27 @@ func changeLang(queries *db.Queries, userid string, lang string) error {
 	err := queries.SetLanguage(ctx, params)
 	if err != nil {
 		log.Println(err)
+	}
+	return err
+}
+
+func changeTimer(queries *db.Queries, userid string, bot *tgbotapi.BotAPI, updates tgbotapi.Update, chatid int64, hour int) error {
+	ctx := context.Background()
+
+	now := time.Now()
+	timerValue := time.Date(now.Year(), now.Month(), now.Day(), hour, 0, 0, 0, now.Location())
+	params := db.SetTimerParams{
+		Userid: userid,
+		Timer:  timerValue,
+	}
+	err := queries.SetTimer(ctx, params)
+	if err != nil {
+		log.Println(err.Error())
+		_, text := utils.GetTranslation(ctx, queries, updates, "timer_1")
+		SendMessage(bot, chatid, text)
+	} else {
+		_, text := utils.GetTranslation(ctx, queries, updates, "timer")
+		SendMessage(bot, chatid, text)
 	}
 	return err
 }

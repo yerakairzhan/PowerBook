@@ -13,10 +13,7 @@ update users set language = $2 where userid = $1;
 SELECT userid, username FROM users WHERE userid = $1;
 
 -- name: SetUserState :exec
-INSERT INTO users (userid, state)
-VALUES ($1, $2)
-    ON CONFLICT (userid) DO UPDATE
-    SET state = EXCLUDED.state;
+update users set state = $2 where userid = $1;
 
 -- name: GetUserState :one
 SELECT state FROM users WHERE userid = $1;
@@ -29,3 +26,9 @@ update users set registered = true where userid = $1;
 
 -- name: GetRegistered :one
 select registered from users where userid = $1 ;
+
+-- name: SetTimer :exec
+update users set timer = $2 where userid = $1;
+
+-- name: GetTimer :one
+select timer from users where userid = $1 ;

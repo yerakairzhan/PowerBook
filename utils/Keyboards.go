@@ -39,3 +39,14 @@ func InlineRegister() tgbotapi.InlineKeyboardMarkup {
 	)
 	return inline
 }
+
+func InlineTimer() tgbotapi.InlineKeyboardMarkup {
+	inline := tgbotapi.NewInlineKeyboardMarkup(
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("🕒 15:00", "timer_15_00"),
+			tgbotapi.NewInlineKeyboardButtonData("🕕 18:00", "timer_18_00"),
+			tgbotapi.NewInlineKeyboardButtonData("🕘 21:00", "timer_21_00"),
+		),
+	)
+	return inline
+}

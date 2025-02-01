@@ -1,3 +1,2 @@
-DROP TABLE IF EXISTS users;
-ALTER TABLE reading_logs DROP CONSTRAINT reading_logs_userid_fkey;
+DROP TABLE IF EXISTS users CASCADE;
 drop table if exists reading_logs;

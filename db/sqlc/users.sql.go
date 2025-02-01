@@ -8,6 +8,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"time"
 )
 
 const createUser = `-- name: CreateUser :one
@@ -73,6 +74,17 @@ func (q *Queries) GetRegistered(ctx context.Context, userid string) (sql.NullBoo
 	return registered, err
 }
 
+const getTimer = `-- name: GetTimer :one
+select timer from users where userid = $1
+`
+
+func (q *Queries) GetTimer(ctx context.Context, userid string) (time.Time, error) {
+	row := q.db.QueryRowContext(ctx, getTimer, userid)
+	var timer time.Time
+	err := row.Scan(&timer)
+	return timer, err
+}
+
 const getUser = `-- name: GetUser :one
 SELECT userid, username FROM users WHERE userid = $1
 `
@@ -123,11 +135,22 @@ func (q *Queries) SetRegistered(ctx context.Context, userid string) error {
 	return err
 }
 
+const setTimer = `-- name: SetTimer :exec
+update users set timer = $2 where userid = $1
+`
+
+type SetTimerParams struct {
+	Userid string    `json:"userid"`
+	Timer  time.Time `json:"timer"`
+}
+
+func (q *Queries) SetTimer(ctx context.Context, arg SetTimerParams) error {
+	_, err := q.db.ExecContext(ctx, setTimer, arg.Userid, arg.Timer)
+	return err
+}
+
 const setUserState = `-- name: SetUserState :exec
-INSERT INTO users (userid, state)
-VALUES ($1, $2)
-    ON CONFLICT (userid) DO UPDATE
-    SET state = EXCLUDED.state
+update users set state = $2 where userid = $1
 `
 
 type SetUserStateParams struct {

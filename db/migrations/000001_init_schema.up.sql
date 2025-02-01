@@ -4,6 +4,7 @@ CREATE TABLE users (
                        username VARCHAR(255) NOT NULL,
                        registered BOOLEAN DEFAULT FALSE,
                        language VARCHAR(3) DEFAULT 'ru',
+                       timer TIME NOT NULL DEFAULT '22:00',
                        state VARCHAR NULL,
                        created_at TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'Asia/Almaty')
 );

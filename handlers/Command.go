@@ -52,6 +52,8 @@ func handleCommand(command string, queries *db.Queries, updates tgbotapi.Update,
 			log.Println("Error sending message", err)
 		}
 
+		time.Sleep(1 * time.Second) //TODO на старте теперь надо добавить сет таймер
+
 	case "menu":
 		callback_menu(queries, updates, bot)
 
@@ -64,6 +66,9 @@ func handleCommand(command string, queries *db.Queries, updates tgbotapi.Update,
 
 	case "read":
 		callback_read(queries, updates, bot, strconv.FormatInt(userid, 10), chatid)
+
+	case "timer":
+		callback_timer(queries, updates, bot, chatid)
 	}
 }
 
@@ -140,5 +145,19 @@ func callback_register(queries *db.Queries, updates tgbotapi.Update, bot *tgbota
 		if err != nil {
 			log.Println("Error sending message", err)
 		}
+		callback_timer(queries, updates, bot, chatid)
+	}
+}
+
+func callback_timer(queries *db.Queries, updates tgbotapi.Update, bot *tgbotapi.BotAPI, chatid int64) {
+	ctx := context.Background()
+	time.Sleep(1 * time.Second)
+	_, text := utils.GetTranslation(ctx, queries, updates, "register_2")
+	msg := tgbotapi.NewMessage(chatid, text)
+	msg.ReplyMarkup = utils.InlineTimer()
+	msg.ParseMode = "HTML"
+	_, err := bot.Send(msg)
+	if err != nil {
+		log.Println("Error sending message", err)
 	}
 }

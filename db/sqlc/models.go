@@ -23,6 +23,7 @@ type User struct {
 	Username   string         `json:"username"`
 	Registered sql.NullBool   `json:"registered"`
 	Language   sql.NullString `json:"language"`
+	Timer      time.Time      `json:"timer"`
 	State      sql.NullString `json:"state"`
 	CreatedAt  sql.NullTime   `json:"created_at"`
 }
