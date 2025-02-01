@@ -71,12 +71,12 @@ func (q *Queries) GetReadingLogsByUser(ctx context.Context, userid string) ([]Ge
 }
 
 const getTopReaders = `-- name: GetTopReaders :many
-SELECT u.username, SUM(r.minutes_read) AS total_minutes
-FROM reading_logs r
-         JOIN users u ON r.userid = u.id
+SELECT u.username, SUM(rl.minutes_read) AS total_minutes
+FROM users u
+         JOIN reading_logs rl ON u.userid = rl.userid
 GROUP BY u.username
 ORDER BY total_minutes DESC
-    LIMIT $1
+    LIMIT 3
 `
 
 type GetTopReadersRow struct {
@@ -84,8 +84,8 @@ type GetTopReadersRow struct {
 	TotalMinutes int64  `json:"total_minutes"`
 }
 
-func (q *Queries) GetTopReaders(ctx context.Context, limit int32) ([]GetTopReadersRow, error) {
-	rows, err := q.db.QueryContext(ctx, getTopReaders, limit)
+func (q *Queries) GetTopReaders(ctx context.Context) ([]GetTopReadersRow, error) {
+	rows, err := q.db.QueryContext(ctx, getTopReaders)
 	if err != nil {
 		return nil, err
 	}

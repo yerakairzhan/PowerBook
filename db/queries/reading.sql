@@ -14,9 +14,13 @@ WHERE userid = $1
 ORDER BY date DESC;
 
 -- name: GetTopReaders :many
-SELECT u.username, SUM(r.minutes_read) AS total_minutes
-FROM reading_logs r
-         JOIN users u ON r.userid = u.id
+SELECT u.username, SUM(rl.minutes_read) AS total_minutes
+FROM users u
+         JOIN reading_logs rl ON u.userid = rl.userid
 GROUP BY u.username
 ORDER BY total_minutes DESC
-    LIMIT $1;
+    LIMIT 3;
+
+
+
+

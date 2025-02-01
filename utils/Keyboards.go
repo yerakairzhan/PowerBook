@@ -1,14 +1,18 @@
 package utils
 
-import tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+import (
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+)
 
 func InlineMenu() tgbotapi.InlineKeyboardMarkup {
+	LoadConfig()
+
 	inline := tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(
 			tgbotapi.NewInlineKeyboardButtonData("📚 Read", "callback_read"),
 		),
 		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonData("📊 Stat", "callback_stat"),
+			tgbotapi.NewInlineKeyboardButtonURL("📊 Table", TableURL),
 		),
 		tgbotapi.NewInlineKeyboardRow(
 			tgbotapi.NewInlineKeyboardButtonData("🏆 Top", "callback_top"),
@@ -49,4 +53,13 @@ func InlineTimer() tgbotapi.InlineKeyboardMarkup {
 		),
 	)
 	return inline
+}
+
+func MenuKeyboard() tgbotapi.ReplyKeyboardMarkup {
+	buttons := []tgbotapi.KeyboardButton{
+		tgbotapi.NewKeyboardButton("/menu"),
+	}
+
+	keyboard := tgbotapi.NewReplyKeyboard(buttons)
+	return keyboard
 }
