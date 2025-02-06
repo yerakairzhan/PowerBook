@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"PowerBook/api"
 	db "PowerBook/db/sqlc"
 	"PowerBook/utils"
 	"context"
@@ -135,6 +136,13 @@ func callbackRead(queries *db.Queries, updates tgbotapi.Update, bot *tgbotapi.Bo
 
 func callbackRegister(queries *db.Queries, updates tgbotapi.Update, bot *tgbotapi.BotAPI, chatid int64, userid string) {
 	ctx := context.Background()
+	yes, _ := queries.GetRegistered(ctx, userid)
+	if yes.Bool == false {
+		utils.LoadConfig()
+		if err := api.AddUserToSheet(utils.GoogleApi, userid, updates.CallbackQuery.From.UserName); err != nil {
+			log.Fatalf("Error adding user to sheet: %v", err)
+		}
+	}
 	err := queries.SetRegistered(ctx, userid)
 	if err != nil {
 		log.Println("Error setting user registered:", err)
@@ -289,8 +297,16 @@ func changeTimer(queries *db.Queries, userid string, bot *tgbotapi.BotAPI, updat
 		_, text := utils.GetTranslation(ctx, queries, updates, "timer")
 		msg := tgbotapi.NewMessage(chatid, text)
 		msg.ParseMode = "HTML"
-		msg.ReplyMarkup = utils.MenuKeyboard()
 		_, err := bot.Send(msg)
+		if err != nil {
+			log.Println(err.Error())
+		}
+		time.Sleep(2 * time.Second)
+		_, text = utils.GetTranslation(ctx, queries, updates, "menu")
+		msg = tgbotapi.NewMessage(chatid, text)
+		msg.ParseMode = "HTML"
+		msg.ReplyMarkup = utils.InlineMenu()
+		_, err = bot.Send(msg)
 		if err != nil {
 			log.Println(err.Error())
 		}

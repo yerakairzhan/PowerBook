@@ -10,6 +10,7 @@ var BotToken string
 var DBDriver string
 var DBSource string
 var TableURL string
+var GoogleApi string
 
 func LoadConfig() {
 	err := godotenv.Load()
@@ -21,4 +22,5 @@ func LoadConfig() {
 	DBDriver = os.Getenv("DB_DRIVER")
 	DBSource = os.Getenv("DB_SOURCE")
 	TableURL = os.Getenv("TABLE_URL")
+	GoogleApi = os.Getenv("GOOGLE_API")
 }

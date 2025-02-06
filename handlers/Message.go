@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"PowerBook/api"
 	db "PowerBook/db/sqlc"
 	"PowerBook/utils"
 	"context"
@@ -64,6 +65,12 @@ func handleMessage(queries *db.Queries, updates tgbotapi.Update, bot *tgbotapi.B
 		err = queries.DeleteUserState(ctx, strconv.FormatInt(userid, 10))
 		if err != nil {
 			log.Println(err)
+		}
+
+		utils.LoadConfig()
+		err = api.AddReadingMinutes(utils.GoogleApi, strconv.FormatInt(userid, 10), minutes)
+		if err != nil {
+			log.Fatalf("Error adding reading minutes: %v", err)
 		}
 
 	} else {
