@@ -62,7 +62,7 @@ func handleCommand(command string, queries *db.Queries, updates tgbotapi.Update,
 	case "stat":
 
 	case "top":
-		callbackTop(bot, chatid, queries, updates)
+		callbackTop(bot, chatid, strconv.FormatInt(userid, 10), queries, updates)
 
 	case "language":
 		callbackLang(queries, updates, bot, chatid)
@@ -174,10 +174,10 @@ func callbackTimer(queries *db.Queries, updates tgbotapi.Update, bot *tgbotapi.B
 	}
 }
 
-func callbackTop(bot *tgbotapi.BotAPI, chatID int64, queries *db.Queries, updates tgbotapi.Update) {
+func callbackTop(bot *tgbotapi.BotAPI, chatID int64, userid string, queries *db.Queries, updates tgbotapi.Update) {
 	ctx := context.Background()
 
-	topReaders, err := queries.GetTopReaders(ctx)
+	topReaders, err := queries.GetTopReadersThisMonth(ctx)
 	if err != nil {
 		log.Println("Error getting top readers:", err)
 		return
@@ -217,8 +217,66 @@ func callbackTop(bot *tgbotapi.BotAPI, chatID int64, queries *db.Queries, update
 	if err != nil {
 		log.Println("Error sending message:", err)
 	}
-}
 
+	topReader, err := queries.GetTopReaders(ctx)
+	top := topReader[0]
+	err, text = utils.GetTranslation(ctx, queries, updates, "top_1")
+	if err != nil {
+		log.Println("Error getting translation:", err)
+	}
+	msg = tgbotapi.NewMessage(chatID, text+"\n"+top.Username+" - "+strconv.FormatInt(top.TotalMinutes, 10))
+	msg.ParseMode = "HTML"
+	time.Sleep(1 * time.Second)
+	_, err = bot.Send(msg)
+	if err != nil {
+		log.Println("Error sending message:", err)
+	}
+
+	topStreaks, err := queries.GetTopStreaks(ctx)
+	if err != nil {
+		log.Println("Error getting top streaks:", err)
+	} else {
+		var inlineButtons [][]tgbotapi.InlineKeyboardButton
+		for i, reader := range topStreaks {
+			var medal string
+			switch i {
+			case 0:
+				medal = "🥇" // золото
+			case 1:
+				medal = "🥈" // серебро
+			case 2:
+				medal = "🥉" // бронза
+			default:
+				medal = ""
+			}
+			button := []tgbotapi.InlineKeyboardButton{
+				tgbotapi.NewInlineKeyboardButtonData(fmt.Sprintf("%s", medal), fmt.Sprintf("username_%s", reader.Username)),
+				tgbotapi.NewInlineKeyboardButtonData(fmt.Sprintf("@%s", reader.Username), fmt.Sprintf("username_%s", reader.Username)),
+				tgbotapi.NewInlineKeyboardButtonData(fmt.Sprintf("%d 🔥", reader.StreakLength), fmt.Sprintf("minutes_%d", reader.StreakLength)),
+			}
+			inlineButtons = append(inlineButtons, button)
+		}
+
+		inlineMarkup := tgbotapi.NewInlineKeyboardMarkup(inlineButtons...)
+		you, err := queries.GetUserTopStreak(ctx, userid)
+		if err != nil {
+			log.Println("Error getting user top streaks:", err)
+		} else {
+			err, text := utils.GetTranslation(ctx, queries, updates, "top_2")
+			if err != nil {
+				log.Println("Error getting translation:", err)
+			}
+			msg := tgbotapi.NewMessage(chatID, text+you+"🔥")
+			msg.ParseMode = "HTML"
+			msg.ReplyMarkup = inlineMarkup
+			_, err = bot.Send(msg)
+			if err != nil {
+				log.Println("Error sending message:", err)
+			}
+		}
+	}
+
+}
 func SendMessage(bot *tgbotapi.BotAPI, chatID int64, text string) int {
 	msg := tgbotapi.NewMessage(chatID, text)
 	msg.ParseMode = "HTML"

@@ -107,6 +107,133 @@ func (q *Queries) GetTopReaders(ctx context.Context) ([]GetTopReadersRow, error)
 	return items, nil
 }
 
+const getTopReadersThisMonth = `-- name: GetTopReadersThisMonth :many
+SELECT u.username, SUM(rl.minutes_read) AS total_minutes
+FROM users u
+         JOIN reading_logs rl ON u.userid = rl.userid
+WHERE rl.date >= date_trunc('month', CURRENT_DATE)  -- Start of the current month
+  AND rl.date < date_trunc('month', CURRENT_DATE + INTERVAL '1 month')  -- Start of next month
+GROUP BY u.username
+ORDER BY total_minutes DESC
+    LIMIT 3
+`
+
+type GetTopReadersThisMonthRow struct {
+	Username     string `json:"username"`
+	TotalMinutes int64  `json:"total_minutes"`
+}
+
+func (q *Queries) GetTopReadersThisMonth(ctx context.Context) ([]GetTopReadersThisMonthRow, error) {
+	rows, err := q.db.QueryContext(ctx, getTopReadersThisMonth)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetTopReadersThisMonthRow
+	for rows.Next() {
+		var i GetTopReadersThisMonthRow
+		if err := rows.Scan(&i.Username, &i.TotalMinutes); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getTopStreaks = `-- name: GetTopStreaks :many
+WITH consecutive_days AS (
+    SELECT
+        rl.userid,
+        rl.date,
+        ROW_NUMBER() OVER (PARTITION BY rl.userid ORDER BY rl.date)
+            - EXTRACT(DAY FROM rl.date)::INT AS streak_group
+    FROM reading_logs rl
+),
+     streaks AS (
+         SELECT
+             u.username,
+             COUNT(*) AS streak_length,
+             MAX(date) AS last_date
+         FROM consecutive_days cd
+                  JOIN users u ON cd.userid = u.userid
+         GROUP BY u.username, streak_group
+     )
+SELECT
+    username,
+    streak_length
+FROM streaks
+WHERE last_date = CURRENT_DATE  -- Ensure the streak continues up to today
+ORDER BY streak_length DESC
+    LIMIT 3
+`
+
+type GetTopStreaksRow struct {
+	Username     string `json:"username"`
+	StreakLength int64  `json:"streak_length"`
+}
+
+func (q *Queries) GetTopStreaks(ctx context.Context) ([]GetTopStreaksRow, error) {
+	rows, err := q.db.QueryContext(ctx, getTopStreaks)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetTopStreaksRow
+	for rows.Next() {
+		var i GetTopStreaksRow
+		if err := rows.Scan(&i.Username, &i.StreakLength); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getUserTopStreak = `-- name: GetUserTopStreak :one
+WITH consecutive_days AS (
+    SELECT
+        rl.userid,
+        rl.date,
+        ROW_NUMBER() OVER (PARTITION BY rl.userid ORDER BY rl.date)
+            - EXTRACT(DAY FROM rl.date)::INT AS streak_group
+    FROM reading_logs rl
+    WHERE rl.userid = $1
+),
+     streaks AS (
+         SELECT
+             COUNT(*) AS streak_length,
+             MAX(date) AS last_date
+         FROM consecutive_days
+         GROUP BY streak_group
+     )
+SELECT
+    CASE
+        WHEN MAX(streak_length) IS NULL THEN '0'
+        ELSE CAST(MAX(streak_length) AS TEXT)
+        END AS top_streak
+FROM streaks
+WHERE last_date = CURRENT_DATE
+`
+
+func (q *Queries) GetUserTopStreak(ctx context.Context, userid string) (string, error) {
+	row := q.db.QueryRowContext(ctx, getUserTopStreak, userid)
+	var top_streak string
+	err := row.Scan(&top_streak)
+	return top_streak, err
+}
+
 const updateReadingLog = `-- name: UpdateReadingLog :one
 update reading_logs set minutes_read = $3 where (userid = $1 and date = $2)
     returning id, userid, date, minutes_read, created_at

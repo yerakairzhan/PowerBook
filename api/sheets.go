@@ -64,7 +64,7 @@ func AddReadingMinutes(spreadsheetId, userID string, minutes int) error {
 	currentTime := time.Now()
 	monthName := currentTime.Month().String()
 	sheetName := monthName
-	// Load JWT credentials
+
 	creds, err := os.ReadFile("api/credentials.json")
 	if err != nil {
 		return fmt.Errorf("error reading credentials: %v", err)
@@ -143,7 +143,6 @@ func AddReadingMinutes(spreadsheetId, userID string, minutes int) error {
 	return nil
 }
 
-// Converts a column index to Google Sheets column letter (e.g., 1 -> A, 27 -> AA)
 func getColumnLetter(index int) string {
 	letters := ""
 	for index > 0 {

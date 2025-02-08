@@ -1,20 +1,39 @@
 {
-  "start": "Hello, ",
-  "start_1": "Welcome back, we missed you!",
-  "start_2": "📚 <b>Welcome to the Book Marathon!</b> 📚\n\nEvery day, mark how many pages you’ve read and move towards your goal! The bot will remind you to track your progress, and at the end of the month, it will summarize the results.\n\n🔹 <b>How does the marathon work?</b>\n✅ Register and log your reading every day.\n✅ Get reminders if you forget to mark your progress.\n✅ At the end of the month, the bot will allocate participants: those who read more will give a book to those who read less!\n\nClick <b>\"Register\"</b> to get started! 🚀",
-  "menu": "📌 <b>Main Menu</b>\n\nChoose an action from the list of available commands\nClick on the required command or type it manually.\n\n<i>(You can always call the Menu by typing <b>/menu</b>)</i>",
-  "lang": "🌍 <b>Language Selection</b>\n\nPlease choose the language in which you would like to use the bot\n\nClick the appropriate button to change the language.",
-  "read": "📖 <b>How many minutes have you read today?</b>\n\nPlease enter the number of minutes you dedicated to reading today. For example: 30",
-  "read_1": "Great! Recorded in the statistics.",
-  "read_2": "I didn’t understand you. Use the bot’s commands.",
-  "read_3": "We have updated your statistics for today.",
-  "register": "<b>🎉 Congratulations! 🎉</b>\nYou have successfully registered! 🎊 Now you can enjoy all the features.",
-  "register_1": "Sorry, you are not registered. Please complete the registration process to continue.",
-  "register_2": "<b>📅 Set up your personal timer! ⏳</b>\n\nYou can set a reminder for a time that works for you. Just select a time, and we will send you a notification exactly on time!\n\n<b>🔹 How to set the timer?</b>\nChoose the time to send the message (e.g., 20:00).",
-  "lang_1": "<b>🎉 Language successfully changed!</b>\nThe bot will now communicate with you in the selected language.",
-  "lang_2": "<b>❌ Error changing language</b>\nFailed to change the language. Please try again later.",
-  "timer": "🎉 Congratulations! You have successfully set the timer. The reminder will be sent on time. ⏰",
-  "timer_1": "⚠️ An error occurred! Failed to set the timer. Please try again or select a different time.",
-  "timer_2": "⏰ <b>Reminder!</b>\nPlease enter the amount of time you read today.\n(Hint: You can use <b>/read</b>)",
-  "top": "<b>These are the leaders among readers!</b>"
+  "start": "👋 <b>Hello,</b> ",
+  "start_1": "🎉 <b>Welcome back!</b> We missed you! 😊",
+  "start_2": "📚 <b>Welcome to the Book Marathon!</b> 📚\n\nEvery day, mark how many pages you’ve read and move towards your goal! 🚀 The bot will remind you to track your progress, and at the end of the month, it will summarize the results. 🏆\n\n🔹 <b>How does the marathon work?</b>\n✅ <b>Register</b> and log your reading every day.\n🔔 <b>Get reminders</b> if you forget to mark your progress.\n📊 <b>Monthly Results:</b> Those who read more will receive a book from those who read less! 🎁\n\nClick <b>\"Register\"</b> to get started! 🚀",
+
+  "menu": "📌 <b>Main Menu</b>\n\nChoose an action from the list of available commands. ✨\nClick on the desired command or type it manually. 🖋️\n\n<i>(You can always access the Menu by typing <b>/menu</b>)</i>",
+
+  "lang": "🌍 <b>Language Selection</b>\n\nPlease choose the language you would like to use the bot in. 🗣️\n\nClick the appropriate button to change the language. 🔄",
+
+  "read": "📖 <b>How many minutes have you read today?</b> ⏳\n\nPlease enter the number of minutes you dedicated to reading today. For example: <b>30</b> 🕰️",
+
+  "read_1": "✅ <b>Great!</b> Your reading time has been recorded in the statistics. 📊",
+
+  "read_2": "❌ <b>Oops!</b> I didn’t understand you. Please use the bot’s commands. 🤖",
+
+  "read_3": "🔄 <b>Update:</b> Your statistics for today have been updated. ✅",
+
+  "register": "<b>🎉 Congratulations! 🎉</b>\nYou have successfully registered! 🎊 Now you can enjoy all the features. 📚",
+
+  "register_1": "🚫 <b>Sorry!</b> You are not registered. Please complete the registration process to continue. 📝",
+
+  "register_2": "<b>📅 Set Up Your Personal Timer! ⏳</b>\n\nYou can set a reminder at a time that works best for you. ⏰ Just select a time, and we’ll notify you exactly on schedule! 📨\n\n<b>🔹 How to set the timer?</b>\nChoose the time to send the reminder (e.g., <b>20:00</b>).",
+
+  "lang_1": "🎉 <b>Language successfully changed!</b> 🌍\nThe bot will now communicate with you in the selected language. 🗣️",
+
+  "lang_2": "❌ <b>Error changing language!</b> ⚠️\nFailed to change the language. Please try again later. 🔄",
+
+  "timer": "🎉 <b>Congratulations!</b> You have successfully set the timer. ⏰ The reminder will be sent on time. 🕰️",
+
+  "timer_1": "⚠️ <b>An error occurred!</b> ❌\nFailed to set the timer. Please try again or select a different time. 🔁",
+
+  "timer_2": "⏰ <b>Reminder!</b> 📝\nPlease enter the amount of time you read today. 📖\n(Hint: You can use <b>/read</b>)",
+
+  "top": "🏆 <b>These are the top readers of the month!</b> 📚",
+
+  "top_1": "👑 <b>This is the Ultimate Bookworm!</b> 🐛",
+
+  "top_2": "🔥 <b>Your reading streak is:</b> "
 }

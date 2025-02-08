@@ -21,7 +21,7 @@ func handleCallback(command string, queries *db.Queries, updates tgbotapi.Update
 		callbackRead(queries, updates, bot, userid, chatid)
 	case "callback_stat":
 	case "callback_top":
-		callbackTop(bot, chatid, queries, updates)
+		callbackTop(bot, chatid, userid, queries, updates)
 	case "callback_lang":
 		callbackLang(queries, updates, bot, chatid)
 	case "callback_ru":
