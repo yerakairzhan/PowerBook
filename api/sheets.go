@@ -1,6 +1,7 @@
 package api
 
 import (
+	"PowerBook/utils"
 	"context"
 	"fmt"
 	"golang.org/x/oauth2/google"
@@ -17,13 +18,15 @@ func AddUserToSheet(spreadsheetId, userID, username string) error {
 	monthName := currentTime.Month().String()
 	sheetName := monthName
 
-	creds, err := os.ReadFile("api/credentials.json")
-	if err != nil {
-		return fmt.Errorf("Error reading credentials: %v", err)
+	utils.LoadConfig()
+	creds := os.Getenv("GOOGLE_CREDENTIALS")
+	if creds == "" {
+		return fmt.Errorf("Error: GOOGLE_CREDENTIALS environment variable not set")
 	}
+	credsBytes := []byte(creds)
 
 	// Creating JWT-based config
-	config, err := google.JWTConfigFromJSON(creds, sheets.SpreadsheetsScope)
+	config, err := google.JWTConfigFromJSON(credsBytes, sheets.SpreadsheetsScope)
 	if err != nil {
 		return fmt.Errorf("Error loading JWT config: %v", err)
 	}
@@ -65,14 +68,17 @@ func AddReadingMinutes(spreadsheetId, userID string, minutes int) error {
 	monthName := currentTime.Month().String()
 	sheetName := monthName
 
-	creds, err := os.ReadFile("api/credentials.json")
-	if err != nil {
-		return fmt.Errorf("error reading credentials: %v", err)
+	utils.LoadConfig()
+	creds := os.Getenv("GOOGLE_CREDENTIALS")
+	if creds == "" {
+		return fmt.Errorf("Error: GOOGLE_CREDENTIALS environment variable not set")
 	}
+	credsBytes := []byte(creds)
 
-	config, err := google.JWTConfigFromJSON(creds, sheets.SpreadsheetsScope)
+	// Creating JWT-based config
+	config, err := google.JWTConfigFromJSON(credsBytes, sheets.SpreadsheetsScope)
 	if err != nil {
-		return fmt.Errorf("error loading JWT config: %v", err)
+		return fmt.Errorf("Error loading JWT config: %v", err)
 	}
 
 	client := config.Client(context.Background())
