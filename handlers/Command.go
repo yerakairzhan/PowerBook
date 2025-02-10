@@ -30,6 +30,7 @@ func handleCommand(command string, queries *db.Queries, updates tgbotapi.Update,
 			} else {
 				_, text := utils.GetTranslation(ctx, queries, updates, "start")
 				msg := tgbotapi.NewMessage(chatid, text+name)
+				msg.ParseMode = "HTML"
 				_, err := bot.Send(msg)
 				if err != nil {
 					log.Println("Error sending message", err)
@@ -38,6 +39,7 @@ func handleCommand(command string, queries *db.Queries, updates tgbotapi.Update,
 		} else {
 			_, text := utils.GetTranslation(ctx, queries, updates, "start_1")
 			msg := tgbotapi.NewMessage(chatid, text)
+			msg.ParseMode = "HTML"
 			_, err := bot.Send(msg)
 			if err != nil {
 				log.Println("Error sending message", err)
