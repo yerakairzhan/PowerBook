@@ -54,10 +54,31 @@ func handleCallback(command string, queries *db.Queries, updates tgbotapi.Update
 
 	case "timer_15_00":
 		changeTimer(queries, userid, bot, updates, chatid, 15)
+
+		timer, err := queries.GetTimer(ctx, userid)
+		if err != nil {
+			log.Println("Error fetching timer:", err)
+		} else {
+			go ScheduleDaily(timer.Hour(), bot, chatid, queries, updates)
+		}
 	case "timer_18_00":
 		changeTimer(queries, userid, bot, updates, chatid, 18)
+
+		timer, err := queries.GetTimer(ctx, userid)
+		if err != nil {
+			log.Println("Error fetching timer:", err)
+		} else {
+			go ScheduleDaily(timer.Hour(), bot, chatid, queries, updates)
+		}
 	case "timer_21_00":
 		changeTimer(queries, userid, bot, updates, chatid, 21)
+
+		timer, err := queries.GetTimer(ctx, userid)
+		if err != nil {
+			log.Println("Error fetching timer:", err)
+		} else {
+			go ScheduleDaily(timer.Hour(), bot, chatid, queries, updates)
+		}
 	default:
 		log.Println("Unknown command: " + command)
 	}

@@ -112,6 +112,15 @@ func (q *Queries) GetUserState(ctx context.Context, userid string) (sql.NullStri
 	return state, err
 }
 
+const resetRegistration = `-- name: ResetRegistration :exec
+update users set registered = false where userid = $1
+`
+
+func (q *Queries) ResetRegistration(ctx context.Context, userid string) error {
+	_, err := q.db.ExecContext(ctx, resetRegistration, userid)
+	return err
+}
+
 const setLanguage = `-- name: SetLanguage :exec
 update users set language = $2 where userid = $1
 `

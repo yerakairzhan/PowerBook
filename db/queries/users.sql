@@ -24,6 +24,9 @@ update users set state = null where userid = $1;
 -- name: SetRegistered :exec
 update users set registered = true where userid = $1;
 
+-- name: ResetRegistration :exec
+update users set registered = false where userid = $1;
+
 -- name: GetRegistered :one
 select registered from users where userid = $1 ;
 

@@ -138,13 +138,16 @@ func callbackRead(queries *db.Queries, updates tgbotapi.Update, bot *tgbotapi.Bo
 
 func callbackRegister(queries *db.Queries, updates tgbotapi.Update, bot *tgbotapi.BotAPI, chatid int64, userid string) {
 	ctx := context.Background()
+
 	yes, _ := queries.GetRegistered(ctx, userid)
 	if yes.Bool == false {
 		utils.LoadConfig()
+
 		if err := api.AddUserToSheet(utils.GoogleApi, userid, updates.CallbackQuery.From.UserName); err != nil {
 			log.Fatalf("Error adding user to sheet: %v", err)
 		}
 	}
+
 	err := queries.SetRegistered(ctx, userid)
 	if err != nil {
 		log.Println("Error setting user registered:", err)
@@ -153,13 +156,35 @@ func callbackRegister(queries *db.Queries, updates tgbotapi.Update, bot *tgbotap
 		if err != nil {
 			log.Println("Error getting translation", err)
 		}
+
 		msg := tgbotapi.NewMessage(chatid, text)
 		msg.ParseMode = "HTML"
 		_, err = bot.Send(msg)
 		if err != nil {
 			log.Println("Error sending message", err)
 		}
+
+		go resetRegistrationForNextMonth(queries, userid)
 		callbackTimer(queries, updates, bot, chatid)
+	}
+}
+
+func resetRegistrationForNextMonth(queries *db.Queries, userid string) {
+	now := time.Now()
+	var nextMonth time.Time
+	if now.Month() == 12 {
+		nextMonth = time.Date(now.Year()+1, 1, 1, 0, 0, 0, 0, now.Location())
+	} else {
+		nextMonth = time.Date(now.Year(), now.Month()+1, 1, 0, 0, 0, 0, now.Location())
+	}
+	time.Sleep(time.Until(nextMonth))
+
+	ctx := context.Background()
+	err := queries.ResetRegistration(ctx, userid)
+	if err != nil {
+		log.Println("Error resetting registration for the next month:", err)
+	} else {
+		log.Println("Registration reset for the next month for user:", userid)
 	}
 }
 
@@ -220,20 +245,7 @@ func callbackTop(bot *tgbotapi.BotAPI, chatID int64, userid string, queries *db.
 		log.Println("Error sending message:", err)
 	}
 
-	topReader, err := queries.GetTopReaders(ctx)
-	top := topReader[0]
-	err, text = utils.GetTranslation(ctx, queries, updates, "top_1")
-	if err != nil {
-		log.Println("Error getting translation:", err)
-	}
-	msg = tgbotapi.NewMessage(chatID, text+"\n"+top.Username+" - "+strconv.FormatInt(top.TotalMinutes, 10))
-	msg.ParseMode = "HTML"
 	time.Sleep(1 * time.Second)
-	_, err = bot.Send(msg)
-	if err != nil {
-		log.Println("Error sending message:", err)
-	}
-
 	topStreaks, err := queries.GetTopStreaks(ctx)
 	if err != nil {
 		log.Println("Error getting top streaks:", err)
@@ -278,6 +290,22 @@ func callbackTop(bot *tgbotapi.BotAPI, chatID int64, userid string, queries *db.
 		}
 	}
 
+	time.Sleep(1 * time.Second)
+
+	topReader, err := queries.GetTopReaders(ctx)
+	top := topReader[0]
+	err, text = utils.GetTranslation(ctx, queries, updates, "top_1")
+	if err != nil {
+		log.Println("Error getting translation:", err)
+	}
+	msg = tgbotapi.NewMessage(chatID, text+"\n"+top.Username+" - "+strconv.FormatInt(top.TotalMinutes, 10))
+	msg.ParseMode = "HTML"
+	time.Sleep(1 * time.Second)
+	_, err = bot.Send(msg)
+	if err != nil {
+		log.Println("Error sending message:", err)
+	}
+
 }
 func SendMessage(bot *tgbotapi.BotAPI, chatID int64, text string) int {
 	msg := tgbotapi.NewMessage(chatID, text)
@@ -304,24 +332,38 @@ func checkRegistration(ctx context.Context, db *db.Queries, userID int64) (bool,
 	return reged.Bool, nil
 }
 
+var cancelTimer context.CancelFunc
+
 func ScheduleDaily(hour int, bot *tgbotapi.BotAPI, chatid int64, queries *db.Queries, update tgbotapi.Update) {
-	for {
-		ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
 
-		now := time.Now()
-		next := time.Date(now.Year(), now.Month(), now.Day(), hour, 0, 0, 0, now.Location())
-
-		if now.After(next) {
-			next = next.Add(24 * time.Hour)
-		}
-
-		fmt.Println("Следующая отправка:", next)
-		time.Sleep(time.Until(next))
-
-		_, text := utils.GetTranslation(ctx, queries, update, "timer_2")
-		SendMessage(bot, chatid, text)
-		fmt.Println("Сообщение отправлено:", time.Now().Format("15:04:05"))
+	if cancelTimer != nil {
+		cancelTimer()
 	}
+	cancelTimer = cancel
+
+	now := time.Now()
+	next := time.Date(now.Year(), now.Month(), now.Day(), hour, 0, 0, 0, now.Location())
+
+	if now.After(next) {
+		next = next.Add(24 * time.Hour)
+	}
+
+	fmt.Println("Следующая отправка:", next)
+
+	sleepDuration := time.Until(next)
+
+	go func() {
+		select {
+		case <-time.After(sleepDuration): // Wait until the scheduled time
+			// Send the message
+			_, text := utils.GetTranslation(ctx, queries, update, "timer_2")
+			SendMessage(bot, chatid, text)
+			fmt.Println("Сообщение отправлено:", time.Now().Format("15:04:05"))
+		case <-ctx.Done(): // If the context is cancelled, do nothing
+			fmt.Println("Задача отменена.")
+		}
+	}()
 }
 
 func changeLang(queries *db.Queries, userid string, lang string) error {

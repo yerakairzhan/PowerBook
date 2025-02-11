@@ -5,8 +5,6 @@ import (
 	"PowerBook/utils"
 	"context"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-	"log"
-	"strconv"
 )
 
 func SetupHandlers(bot *tgbotapi.BotAPI, db *db.Queries) {
@@ -32,13 +30,6 @@ func SetupHandlers(bot *tgbotapi.BotAPI, db *db.Queries) {
 			}
 		} else {
 			continue
-		}
-
-		timer, err := db.GetTimer(ctx, strconv.FormatInt(userID, 10))
-		if err != nil {
-			log.Println("Error fetching timer:", err)
-		} else {
-			go ScheduleDaily(timer.Hour(), bot, chatID, db, update)
 		}
 
 		registered, err := checkRegistration(ctx, db, userID)
