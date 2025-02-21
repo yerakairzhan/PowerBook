@@ -64,7 +64,8 @@ func handleCommand(command string, queries *db.Queries, updates tgbotapi.Update,
 	case "stat":
 
 	case "top":
-		callbackTop(bot, chatid, strconv.FormatInt(userid, 10), queries, updates)
+		messageID := updates.Message.MessageID
+		callbackTop(bot, chatid, strconv.FormatInt(userid, 10), messageID, queries, updates)
 
 	case "language":
 		callbackLang(queries, updates, bot, chatid)
@@ -201,7 +202,7 @@ func callbackTimer(queries *db.Queries, updates tgbotapi.Update, bot *tgbotapi.B
 	}
 }
 
-func callbackTop(bot *tgbotapi.BotAPI, chatID int64, userid string, queries *db.Queries, updates tgbotapi.Update) {
+func callbackTop(bot *tgbotapi.BotAPI, chatID int64, userid string, messageID int, queries *db.Queries, updates tgbotapi.Update) {
 	ctx := context.Background()
 
 	topReaders, err := queries.GetTopReadersThisMonth(ctx)
@@ -306,7 +307,11 @@ func callbackTop(bot *tgbotapi.BotAPI, chatID int64, userid string, queries *db.
 		log.Println("Error sending message:", err)
 	}
 
+	currentTime := time.Now()
+	time.Sleep(1 * time.Second)
+	sendCalendar(chatID, userid, currentTime.Year(), int(currentTime.Month()), queries, bot, updates, false, messageID)
 }
+
 func SendMessage(bot *tgbotapi.BotAPI, chatID int64, text string) int {
 	msg := tgbotapi.NewMessage(chatID, text)
 	msg.ParseMode = "HTML"
@@ -355,8 +360,7 @@ func ScheduleDaily(hour int, bot *tgbotapi.BotAPI, chatid int64, queries *db.Que
 
 	go func() {
 		select {
-		case <-time.After(sleepDuration): // Wait until the scheduled time
-			// Send the message
+		case <-time.After(sleepDuration):
 			_, text := utils.GetTranslation(ctx, queries, update, "timer_2")
 			SendMessage(bot, chatid, text)
 			fmt.Println("Сообщение отправлено:", time.Now().Format("15:04:05"))
@@ -414,4 +418,44 @@ func changeTimer(queries *db.Queries, userid string, bot *tgbotapi.BotAPI, updat
 		}
 	}
 	return err
+}
+
+func sendCalendar(chatID int64, userID string, year int, month int, queries *db.Queries, bot *tgbotapi.BotAPI, updates tgbotapi.Update, isEdit bool, messageID int) {
+	if month == -1 {
+		month = 11
+		year -= 1
+	}
+	log.Println(chatID, userID, messageID)
+	ctx := context.Background()
+	readLogs, err := queries.GetReadingLogsByUser(ctx, userID)
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	readMinutes := make(map[int]int)
+
+	for _, log := range readLogs {
+		if int(log.Date.Month()) == month && log.Date.Year() == year {
+			day := log.Date.Day()
+			readMinutes[day] = int(log.MinutesRead)
+		}
+	}
+	inlineKeyboard := utils.GenerateCalendarKeyboard(year, month, readMinutes)
+
+	err, text := utils.GetTranslation(ctx, queries, updates, "calendar")
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	if isEdit {
+		editMsg := tgbotapi.NewEditMessageText(chatID, messageID, text)
+		editMsg.ReplyMarkup = &inlineKeyboard
+		editMsg.ParseMode = "HTML"
+		bot.Send(editMsg)
+	} else {
+		msg := tgbotapi.NewMessage(chatID, text)
+		msg.ReplyMarkup = inlineKeyboard
+		msg.ParseMode = "HTML"
+		bot.Send(msg)
+	}
 }
