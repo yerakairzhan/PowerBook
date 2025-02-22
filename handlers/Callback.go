@@ -35,6 +35,7 @@ func handleCallback(command string, queries *db.Queries, updates tgbotapi.Update
 		} else {
 			_, text := utils.GetTranslation(ctx, queries, updates, "lang_1")
 			SendMessage(bot, chatid, text)
+			callbackTimer(queries, updates, bot, chatid)
 		}
 	case "callback_en" == command:
 		err := changeLang(queries, userid, "en")
@@ -44,6 +45,7 @@ func handleCallback(command string, queries *db.Queries, updates tgbotapi.Update
 		} else {
 			_, text := utils.GetTranslation(ctx, queries, updates, "lang_1")
 			SendMessage(bot, chatid, text)
+			callbackTimer(queries, updates, bot, chatid)
 		}
 	case "callback_kz" == command:
 		err := changeLang(queries, userid, "kz")
@@ -53,35 +55,15 @@ func handleCallback(command string, queries *db.Queries, updates tgbotapi.Update
 		} else {
 			_, text := utils.GetTranslation(ctx, queries, updates, "lang_1")
 			SendMessage(bot, chatid, text)
+			callbackTimer(queries, updates, bot, chatid)
 		}
 
 	case "timer_15_00" == command:
 		changeTimer(queries, userid, bot, updates, chatid, 15)
-
-		timer, err := queries.GetTimer(ctx, userid)
-		if err != nil {
-			log.Println("Error fetching timer:", err)
-		} else {
-			go ScheduleDaily(timer.Hour(), bot, chatid, queries, updates)
-		}
 	case "timer_18_00" == command:
 		changeTimer(queries, userid, bot, updates, chatid, 18)
-
-		timer, err := queries.GetTimer(ctx, userid)
-		if err != nil {
-			log.Println("Error fetching timer:", err)
-		} else {
-			go ScheduleDaily(timer.Hour(), bot, chatid, queries, updates)
-		}
 	case "timer_21_00" == command:
 		changeTimer(queries, userid, bot, updates, chatid, 21)
-
-		timer, err := queries.GetTimer(ctx, userid)
-		if err != nil {
-			log.Println("Error fetching timer:", err)
-		} else {
-			go ScheduleDaily(timer.Hour(), bot, chatid, queries, updates)
-		}
 	case strings.HasPrefix(command, "calendar_"):
 		var year, month int
 		_, err := fmt.Sscanf(command, "calendar_%d_%d", &year, &month)

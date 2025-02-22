@@ -41,7 +41,7 @@ func InlineLang() tgbotapi.InlineKeyboardMarkup {
 func InlineRegister() tgbotapi.InlineKeyboardMarkup {
 	inline := tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonData("Регистрироваться", "callback_register"),
+			tgbotapi.NewInlineKeyboardButtonData("Регистрация", "callback_register"),
 		),
 	)
 	return inline

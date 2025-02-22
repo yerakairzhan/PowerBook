@@ -103,8 +103,6 @@ func callbackLang(queries *db.Queries, updates tgbotapi.Update, bot *tgbotapi.Bo
 	if err != nil {
 		log.Println("Error sending message", err)
 	}
-
-	//TODO: change the language logic
 }
 
 func callbackRead(queries *db.Queries, updates tgbotapi.Update, bot *tgbotapi.BotAPI, userid string, chatid int64) {
@@ -166,8 +164,8 @@ func callbackRegister(queries *db.Queries, updates tgbotapi.Update, bot *tgbotap
 		}
 
 		go resetRegistrationForNextMonth(queries, userid)
-		callbackTimer(queries, updates, bot, chatid)
 	}
+	callbackLang(queries, updates, bot, chatid)
 }
 
 func resetRegistrationForNextMonth(queries *db.Queries, userid string) {
@@ -340,32 +338,35 @@ func checkRegistration(ctx context.Context, db *db.Queries, userID int64) (bool,
 var cancelTimer context.CancelFunc
 
 func ScheduleDaily(hour int, bot *tgbotapi.BotAPI, chatid int64, queries *db.Queries, update tgbotapi.Update) {
-	ctx, cancel := context.WithCancel(context.Background())
-
 	if cancelTimer != nil {
 		cancelTimer()
 	}
+
+	ctx, cancel := context.WithCancel(context.Background())
 	cancelTimer = cancel
 
-	now := time.Now()
-	next := time.Date(now.Year(), now.Month(), now.Day(), hour, 0, 0, 0, now.Location())
-
-	if now.After(next) {
-		next = next.Add(24 * time.Hour)
-	}
-
-	fmt.Println("Следующая отправка:", next)
-
-	sleepDuration := time.Until(next)
-
 	go func() {
-		select {
-		case <-time.After(sleepDuration):
-			_, text := utils.GetTranslation(ctx, queries, update, "timer_2")
-			SendMessage(bot, chatid, text)
-			fmt.Println("Сообщение отправлено:", time.Now().Format("15:04:05"))
-		case <-ctx.Done(): // If the context is cancelled, do nothing
-			fmt.Println("Задача отменена.")
+		for {
+			now := time.Now()
+			next := time.Date(now.Year(), now.Month(), now.Day(), hour, 0, 0, 0, now.Location())
+
+			if now.After(next) {
+				next = next.Add(24 * time.Hour)
+			}
+
+			fmt.Println("Следующая отправка:", next)
+			sleepDuration := time.Until(next)
+
+			select {
+			case <-time.After(sleepDuration):
+				_, text := utils.GetTranslation(ctx, queries, update, "timer_2")
+				SendMessage(bot, chatid, text)
+				fmt.Println("Сообщение отправлено:", time.Now().Format("15:04:05"))
+
+			case <-ctx.Done():
+				fmt.Println("Задача отменена.")
+				return
+			}
 		}
 	}()
 }
@@ -387,35 +388,34 @@ func changeLang(queries *db.Queries, userid string, lang string) error {
 
 func changeTimer(queries *db.Queries, userid string, bot *tgbotapi.BotAPI, updates tgbotapi.Update, chatid int64, hour int) error {
 	ctx := context.Background()
+	go ScheduleDaily(hour, bot, chatid, queries, updates)
+	//now := time.Now()
+	//timerValue := time.Date(now.Year(), now.Month(), now.Day(), hour, 0, 0, 0, now.Location())
+	//params := db.SetTimerParams{
+	//	Userid: userid,
+	//	Timer:  timerValue,
+	//}
+	//err := queries.SetTimer(ctx, params)
+	//if err != nil {
+	//	log.Println(err.Error())
+	//	_, text := utils.GetTranslation(ctx, queries, updates, "timer_1")
+	//	SendMessage(bot, chatid, text)
 
-	now := time.Now()
-	timerValue := time.Date(now.Year(), now.Month(), now.Day(), hour, 0, 0, 0, now.Location())
-	params := db.SetTimerParams{
-		Userid: userid,
-		Timer:  timerValue,
-	}
-	err := queries.SetTimer(ctx, params)
+	_, text := utils.GetTranslation(ctx, queries, updates, "timer")
+	msg := tgbotapi.NewMessage(chatid, text)
+	msg.ParseMode = "HTML"
+	_, err := bot.Send(msg)
 	if err != nil {
 		log.Println(err.Error())
-		_, text := utils.GetTranslation(ctx, queries, updates, "timer_1")
-		SendMessage(bot, chatid, text)
-	} else {
-		_, text := utils.GetTranslation(ctx, queries, updates, "timer")
-		msg := tgbotapi.NewMessage(chatid, text)
-		msg.ParseMode = "HTML"
-		_, err := bot.Send(msg)
-		if err != nil {
-			log.Println(err.Error())
-		}
-		time.Sleep(2 * time.Second)
-		_, text = utils.GetTranslation(ctx, queries, updates, "menu")
-		msg = tgbotapi.NewMessage(chatid, text)
-		msg.ParseMode = "HTML"
-		msg.ReplyMarkup = utils.InlineMenu()
-		_, err = bot.Send(msg)
-		if err != nil {
-			log.Println(err.Error())
-		}
+	}
+	time.Sleep(2 * time.Second)
+	_, text = utils.GetTranslation(ctx, queries, updates, "menu")
+	msg = tgbotapi.NewMessage(chatid, text)
+	msg.ParseMode = "HTML"
+	msg.ReplyMarkup = utils.InlineMenu()
+	_, err = bot.Send(msg)
+	if err != nil {
+		log.Println(err.Error())
 	}
 	return err
 }
