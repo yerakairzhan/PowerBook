@@ -52,6 +52,38 @@ func (q *Queries) DeleteUserState(ctx context.Context, userid string) error {
 	return err
 }
 
+const getAllUsersWithTimer = `-- name: GetAllUsersWithTimer :many
+SELECT userid, timer FROM users WHERE timer IS NOT NULL
+`
+
+type GetAllUsersWithTimerRow struct {
+	Userid string    `json:"userid"`
+	Timer  time.Time `json:"timer"`
+}
+
+func (q *Queries) GetAllUsersWithTimer(ctx context.Context) ([]GetAllUsersWithTimerRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAllUsersWithTimer)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetAllUsersWithTimerRow
+	for rows.Next() {
+		var i GetAllUsersWithTimerRow
+		if err := rows.Scan(&i.Userid, &i.Timer); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getLanguage = `-- name: GetLanguage :one
 select language from users where userid = $1
 `

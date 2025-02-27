@@ -9,6 +9,7 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func handleCallback(command string, queries *db.Queries, updates tgbotapi.Update, bot *tgbotapi.BotAPI, chatid int64) {
@@ -35,7 +36,6 @@ func handleCallback(command string, queries *db.Queries, updates tgbotapi.Update
 		} else {
 			_, text := utils.GetTranslation(ctx, queries, updates, "lang_1")
 			SendMessage(bot, chatid, text)
-			callbackTimer(queries, updates, bot, chatid)
 		}
 	case "callback_en" == command:
 		err := changeLang(queries, userid, "en")
@@ -45,7 +45,6 @@ func handleCallback(command string, queries *db.Queries, updates tgbotapi.Update
 		} else {
 			_, text := utils.GetTranslation(ctx, queries, updates, "lang_1")
 			SendMessage(bot, chatid, text)
-			callbackTimer(queries, updates, bot, chatid)
 		}
 	case "callback_kz" == command:
 		err := changeLang(queries, userid, "kz")
@@ -55,15 +54,23 @@ func handleCallback(command string, queries *db.Queries, updates tgbotapi.Update
 		} else {
 			_, text := utils.GetTranslation(ctx, queries, updates, "lang_1")
 			SendMessage(bot, chatid, text)
-			callbackTimer(queries, updates, bot, chatid)
 		}
 
 	case "timer_15_00" == command:
-		changeTimer(queries, userid, bot, updates, chatid, 15)
+		changeTimer(queries, userid, bot, updates, chatid)
+		timerTime, _ := time.Parse("15:04", "15:00")
+		params := db.SetTimerParams{Timer: timerTime, Userid: userid}
+		queries.SetTimer(ctx, params)
 	case "timer_18_00" == command:
-		changeTimer(queries, userid, bot, updates, chatid, 18)
+		changeTimer(queries, userid, bot, updates, chatid)
+		timerTime, _ := time.Parse("15:04", "18:00")
+		params := db.SetTimerParams{Timer: timerTime, Userid: userid}
+		queries.SetTimer(ctx, params)
 	case "timer_21_00" == command:
-		changeTimer(queries, userid, bot, updates, chatid, 21)
+		changeTimer(queries, userid, bot, updates, chatid)
+		timerTime, _ := time.Parse("15:04", "21:00")
+		params := db.SetTimerParams{Timer: timerTime, Userid: userid}
+		queries.SetTimer(ctx, params)
 	case strings.HasPrefix(command, "calendar_"):
 		var year, month int
 		_, err := fmt.Sscanf(command, "calendar_%d_%d", &year, &month)

@@ -35,3 +35,6 @@ update users set timer = $2 where userid = $1;
 
 -- name: GetTimer :one
 select timer from users where userid = $1 ;
+
+-- name: GetAllUsersWithTimer :many
+SELECT userid, timer FROM users WHERE timer IS NOT NULL;

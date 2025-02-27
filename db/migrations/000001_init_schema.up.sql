@@ -7,6 +7,7 @@ CREATE TABLE users (
                        timer TIME NOT NULL DEFAULT '22:00',
                        state VARCHAR NULL,
                        created_at TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'Asia/Almaty')
+                   --created_at TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Almaty')
 );
 
 
@@ -16,6 +17,7 @@ CREATE TABLE reading_logs (
                               date DATE NOT NULL DEFAULT CURRENT_DATE,
                               minutes_read INT NOT NULL CHECK (minutes_read >= 0),
                               created_at TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'Asia/Almaty'),
+    --created_at TIMESTAMP DEFAULT (NOW() AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Almaty')
                               UNIQUE (userid, date) -- Ensure unique constraint on the combination of userid and date
 );
 

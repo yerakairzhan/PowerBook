@@ -36,6 +36,7 @@ func handleCommand(command string, queries *db.Queries, updates tgbotapi.Update,
 					log.Println("Error sending message", err)
 				}
 			}
+			//callbackTimer(queries, updates, bot, chatid)
 		} else {
 			_, text := utils.GetTranslation(ctx, queries, updates, "start_1")
 			msg := tgbotapi.NewMessage(chatid, text)
@@ -56,7 +57,8 @@ func handleCommand(command string, queries *db.Queries, updates tgbotapi.Update,
 			log.Println("Error sending message", err)
 		}
 
-		time.Sleep(1 * time.Second) //TODO на старте теперь надо добавить сет таймер
+		time.Sleep(1 * time.Second)
+		callbackTimer(queries, updates, bot, chatid)
 
 	case "menu":
 		callbackMenu(queries, updates, bot, chatid)
@@ -337,7 +339,7 @@ func checkRegistration(ctx context.Context, db *db.Queries, userID int64) (bool,
 
 var cancelTimer context.CancelFunc
 
-func ScheduleDaily(hour int, bot *tgbotapi.BotAPI, chatid int64, queries *db.Queries, update tgbotapi.Update) {
+func ScheduleDaily(bot *tgbotapi.BotAPI, queries *db.Queries, userid string, chatid int64) {
 	if cancelTimer != nil {
 		cancelTimer()
 	}
@@ -348,23 +350,57 @@ func ScheduleDaily(hour int, bot *tgbotapi.BotAPI, chatid int64, queries *db.Que
 	go func() {
 		for {
 			now := time.Now()
+			// Schedule the next run for midnight
+			next := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+
+			if now.After(next) {
+				next = next.Add(24 * time.Hour)
+			}
+
+			fmt.Println("Следующая проверка таймеров:", next)
+			sleepDuration := time.Until(next)
+
+			select {
+			case <-time.After(sleepDuration):
+				fmt.Println("Проверка таймеров пользователей:", time.Now().Format("15:04:05"))
+
+				// Retrieve all users with their timer settings
+				time, err := queries.GetTimer(ctx, userid)
+				if err != nil {
+					fmt.Println("Ошибка получения пользователей:", err)
+					return
+				}
+				go scheduleUserMessage(time.Hour(), bot, chatid, queries, ctx)
+
+			case <-ctx.Done():
+				fmt.Println("Задача отменена.")
+				return
+			}
+		}
+	}()
+}
+
+func scheduleUserMessage(hour int, bot *tgbotapi.BotAPI, chatid int64, queries *db.Queries, ctx context.Context) {
+	go func() {
+		for {
+			now := time.Now()
 			next := time.Date(now.Year(), now.Month(), now.Day(), hour, 0, 0, 0, now.Location())
 
 			if now.After(next) {
 				next = next.Add(24 * time.Hour)
 			}
 
-			fmt.Println("Следующая отправка:", next)
+			fmt.Println("Следующая отправка для", chatid, ":", next)
 			sleepDuration := time.Until(next)
 
 			select {
 			case <-time.After(sleepDuration):
-				_, text := utils.GetTranslation(ctx, queries, update, "timer_2")
+				_, text := utils.GetTranslation(ctx, queries, tgbotapi.Update{}, "timer_2")
 				SendMessage(bot, chatid, text)
-				fmt.Println("Сообщение отправлено:", time.Now().Format("15:04:05"))
+				fmt.Println("Сообщение отправлено пользователю", chatid, ":", time.Now().Format("15:04:05"))
 
 			case <-ctx.Done():
-				fmt.Println("Задача отменена.")
+				fmt.Println("Задача отменена для пользователя", chatid)
 				return
 			}
 		}
@@ -386,20 +422,9 @@ func changeLang(queries *db.Queries, userid string, lang string) error {
 	return err
 }
 
-func changeTimer(queries *db.Queries, userid string, bot *tgbotapi.BotAPI, updates tgbotapi.Update, chatid int64, hour int) error {
+func changeTimer(queries *db.Queries, userid string, bot *tgbotapi.BotAPI, updates tgbotapi.Update, chatid int64) error {
 	ctx := context.Background()
-	go ScheduleDaily(hour, bot, chatid, queries, updates)
-	//now := time.Now()
-	//timerValue := time.Date(now.Year(), now.Month(), now.Day(), hour, 0, 0, 0, now.Location())
-	//params := db.SetTimerParams{
-	//	Userid: userid,
-	//	Timer:  timerValue,
-	//}
-	//err := queries.SetTimer(ctx, params)
-	//if err != nil {
-	//	log.Println(err.Error())
-	//	_, text := utils.GetTranslation(ctx, queries, updates, "timer_1")
-	//	SendMessage(bot, chatid, text)
+	go ScheduleDaily(bot, queries, userid, chatid)
 
 	_, text := utils.GetTranslation(ctx, queries, updates, "timer")
 	msg := tgbotapi.NewMessage(chatid, text)
