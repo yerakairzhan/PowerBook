@@ -73,3 +73,35 @@ func GetTranslation(ctx context.Context, queries *db.Queries, update tgbotapi.Up
 	message := Translate(lang.String, key)
 	return nil, message
 }
+
+func TextPhoto(ctx context.Context, queries *db.Queries, update tgbotapi.Update, chatID int64) (error, tgbotapi.PhotoConfig) {
+	var userID int
+
+	if update.Message != nil {
+		userID = int(update.Message.From.ID)
+	} else if update.CallbackQuery != nil {
+		userID = int(update.CallbackQuery.From.ID)
+	}
+
+	lang, err := queries.GetLanguage(ctx, strconv.Itoa(userID))
+	if err != nil {
+		log.Printf("Failed to Get Language: %v", err)
+	}
+
+	var photo tgbotapi.PhotoConfig
+	if lang.String == "en" {
+		photo = tgbotapi.NewPhoto(chatID, tgbotapi.FilePath("/utils/photos/eng.jpg"))
+	} else if lang.String == "ru" {
+		photo = tgbotapi.NewPhoto(chatID, tgbotapi.FilePath("/Users/erakairzhan/Desktop/botlab/PowerBook/utils/photos/eng.jpg"))
+	} else if lang.String == "kz" {
+		photo = tgbotapi.NewPhoto(chatID, tgbotapi.FilePath("/utils/photos/eng.jpg"))
+	} else {
+		log.Printf("Language '%s' not found. Falling back to English.", lang)
+	}
+	_, text := GetTranslation(ctx, queries, update, "start_2")
+	photo.Caption = text
+	photo.ParseMode = "HTML"
+	photo.ReplyMarkup = InlineRegister()
+
+	return nil, photo
+}

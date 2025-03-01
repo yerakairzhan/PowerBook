@@ -48,17 +48,20 @@ func handleCommand(command string, queries *db.Queries, updates tgbotapi.Update,
 		}
 
 		time.Sleep(1 * time.Second)
-		_, text := utils.GetTranslation(ctx, queries, updates, "start_2")
-		msg := tgbotapi.NewMessage(chatid, text)
-		msg.ParseMode = "HTML"
-		msg.ReplyMarkup = utils.InlineRegister()
-		_, err = bot.Send(msg)
+
+		err, photo := utils.TextPhoto(ctx, queries, updates, chatid)
 		if err != nil {
-			log.Println("Error sending message", err)
+			log.Println("Error generating text photo:", err)
+			return
+		}
+
+		// Send the photo message
+		_, err = bot.Send(photo)
+		if err != nil {
+			log.Println("Error sending photo:", err)
 		}
 
 		time.Sleep(1 * time.Second)
-		callbackTimer(queries, updates, bot, chatid)
 
 	case "menu":
 		callbackMenu(queries, updates, bot, chatid)
@@ -276,18 +279,22 @@ func callbackTop(bot *tgbotapi.BotAPI, chatID int64, userid string, messageID in
 		you, err := queries.GetUserTopStreak(ctx, userid)
 		if err != nil {
 			log.Println("Error getting user top streaks:", err)
-		} else {
-			err, text := utils.GetTranslation(ctx, queries, updates, "top_2")
-			if err != nil {
-				log.Println("Error getting translation:", err)
-			}
-			msg := tgbotapi.NewMessage(chatID, text+you+"🔥")
-			msg.ParseMode = "HTML"
-			msg.ReplyMarkup = inlineMarkup
-			_, err = bot.Send(msg)
-			if err != nil {
-				log.Println("Error sending message:", err)
-			}
+			return
+		}
+
+		err, text := utils.GetTranslation(ctx, queries, updates, "top_2")
+		if err != nil {
+			log.Println("Error getting translation:", err)
+			return
+		}
+
+		msg := tgbotapi.NewMessage(chatID, text+string(you)+"🔥")
+		msg.ParseMode = "HTML"
+		msg.ReplyMarkup = inlineMarkup
+
+		_, err = bot.Send(msg)
+		if err != nil {
+			log.Println("Error sending message:", err)
 		}
 	}
 

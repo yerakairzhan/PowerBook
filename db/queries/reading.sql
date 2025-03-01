@@ -13,6 +13,9 @@ FROM reading_logs
 WHERE userid = $1
 ORDER BY date DESC;
 
+
+
+
 -- name: GetTopReaders :many
 SELECT u.username, SUM(rl.minutes_read) AS total_minutes
 FROM users u
@@ -82,4 +85,3 @@ SELECT
         END AS top_streak
 FROM streaks
 WHERE last_date = CURRENT_DATE;
-

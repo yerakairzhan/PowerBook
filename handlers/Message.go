@@ -21,66 +21,59 @@ func handleMessage(queries *db.Queries, updates tgbotapi.Update, bot *tgbotapi.B
 	state, _ := queries.GetUserState(ctx, strconv.FormatInt(userid, 10))
 
 	if state.String == "waiting_for_reading_time" {
-
 		minutes, err := strconv.Atoi(userMessage)
-		log.Println("someone read ", minutes)
 		if err != nil {
 			bot.Send(tgbotapi.NewMessage(chatID, "Введите число минут цифрами."))
 			return
 		}
 
+		log.Printf("User %d read %d minutes", userid, minutes)
+		userIDStr := strconv.FormatInt(userid, 10)
+		now := time.Now()
+
 		params := db.CreateReadingLogParams{
-			Userid:      strconv.FormatInt(userid, 10),
-			Date:        time.Now(),
+			Userid:      userIDStr,
+			Date:        now,
 			MinutesRead: int32(minutes),
 		}
-		_, err = queries.CreateReadingLog(ctx, params)
-		if err != nil {
-			if pqErr, ok := err.(*pq.Error); ok {
-				if pqErr.Code == "23505" {
-					params := db.UpdateReadingLogParams{
-						Userid:      strconv.FormatInt(userid, 10),
-						Date:        time.Now(),
-						MinutesRead: int32(minutes),
-					}
-					queries.UpdateReadingLog(ctx, params)
-				}
 
-				_, text := utils.GetTranslation(ctx, queries, updates, "read_3")
-				msg := tgbotapi.NewMessage(chatID, text)
-				msg.ParseMode = "HTML"
-				_, err = bot.Send(msg)
-				if err != nil {
-					log.Println(err)
+		if _, err = queries.CreateReadingLog(ctx, params); err != nil {
+			if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" {
+				updateParams := db.UpdateReadingLogParams{
+					Userid:      userIDStr,
+					Date:        now,
+					MinutesRead: int32(minutes),
 				}
-			}
-		} else {
-			_, text := utils.GetTranslation(ctx, queries, updates, "read_1")
-			msg := tgbotapi.NewMessage(chatID, text)
-			msg.ParseMode = "HTML"
-			_, err = bot.Send(msg)
-			if err != nil {
-				log.Println(err)
+				queries.UpdateReadingLog(ctx, updateParams)
 			}
 		}
 
-		err = queries.DeleteUserState(ctx, strconv.FormatInt(userid, 10))
+		translationKey := "read_1"
 		if err != nil {
-			log.Println(err)
+			translationKey = "read_3"
+		}
+
+		_, text := utils.GetTranslation(ctx, queries, updates, translationKey)
+		msg := tgbotapi.NewMessage(chatID, text)
+		msg.ParseMode = "HTML"
+		if _, err = bot.Send(msg); err != nil {
+			log.Println("Error sending message:", err)
+		}
+
+		if err = queries.DeleteUserState(ctx, userIDStr); err != nil {
+			log.Println("Error deleting user state:", err)
 		}
 
 		utils.LoadConfig()
-		err = api.AddReadingMinutes(utils.GoogleApi, strconv.FormatInt(userid, 10), minutes)
-		if err != nil {
+		if err = api.AddReadingMinutes(utils.GoogleApi, userIDStr, minutes); err != nil {
 			log.Fatalf("Error adding reading minutes: %v", err)
 		}
-
 	} else {
 		_, text := utils.GetTranslation(ctx, queries, updates, "read_2")
 		msg := tgbotapi.NewMessage(chatID, text)
-		_, err := bot.Send(msg)
-		if err != nil {
-			log.Println(err)
+		msg.ParseMode = "HTML"
+		if _, err := bot.Send(msg); err != nil {
+			log.Println("Error sending fallback message:", err)
 		}
 	}
 }
