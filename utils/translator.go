@@ -90,11 +90,11 @@ func TextPhoto(ctx context.Context, queries *db.Queries, update tgbotapi.Update,
 
 	var photo tgbotapi.PhotoConfig
 	if lang.String == "en" {
-		photo = tgbotapi.NewPhoto(chatID, tgbotapi.FilePath("/Users/erakairzhan/Desktop/botlab/PowerBook/utils/photos/eng.jpg"))
+		photo = tgbotapi.NewPhoto(chatID, tgbotapi.FileURL("https://i.imgur.com/yYk3U8A.png"))
 	} else if lang.String == "ru" {
-		photo = tgbotapi.NewPhoto(chatID, tgbotapi.FilePath("/Users/erakairzhan/Desktop/botlab/PowerBook/utils/photos/rus.png"))
+		photo = tgbotapi.NewPhoto(chatID, tgbotapi.FileURL("https://i.imgur.com/VR7Ff56.png"))
 	} else if lang.String == "kz" {
-		photo = tgbotapi.NewPhoto(chatID, tgbotapi.FilePath("/Users/erakairzhan/Desktop/botlab/PowerBook/utils/photos/kaz.png"))
+		photo = tgbotapi.NewPhoto(chatID, tgbotapi.FileURL("https://i.imgur.com/tctD7yB.png"))
 	} else {
 		log.Printf("Language '%s' not found. Falling back to English.", lang)
 	}
